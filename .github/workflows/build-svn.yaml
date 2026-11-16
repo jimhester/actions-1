@@ -116,7 +116,7 @@ jobs:
           # Xvfb and X11 libraries are part of the base system. Base tar cannot
           # detect compression, so R needs gtar (like the OpenBSD R port)
           packages: >-
-            bash curl gmake gfortran gtar-- unzip texinfo texlive_texmf-full
+            bash curl gmake gfortran gtar-- unzip-- texinfo texlive_texmf-full
             pcre2 icu4c png jpeg tiff cairo pango tcl%8.6 tk%8.6
           configure: >-
             FC=egfortran TEXI2ANY=/usr/local/bin/gtexi2any --with-internal-tzcode
