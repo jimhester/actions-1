@@ -76,8 +76,10 @@ jobs:
         disable_search: true
         fail_ci_if_error: false
 
-    - name: Save HTML report
+    - name: Save HTML report and check log
       uses: actions/upload-artifact@v7
       with:
-        name: coverage-html
-        path: coverage-out/html
+        name: coverage
+        path: |
+          coverage-out/html
+          coverage-out/check.log

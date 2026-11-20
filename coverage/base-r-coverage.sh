@@ -59,8 +59,16 @@ instrument)
 check)
   mkdir -p "$TRACES"
   cd "$BUILD"
-  # -k: a failing test shouldn't stop the coverage of the rest
-  COVERAGE_DIR="$TRACES" xvfb-run -a make -k "$CHECK_TARGET" || true
+  # -k: a failing test shouldn't stop the coverage of the rest.
+  # TEST_MC_CORES runs the package tests and examples in parallel. The full
+  # log goes to $OUT/check.log, the job log only gets a summary.
+  TEST_MC_CORES=$JOBS COVERAGE_DIR="$TRACES" \
+    xvfb-run -a make -k "$CHECK_TARGET" > "$OUT/check.log" 2>&1 || status=$?
+  tail -n 30 "$OUT/check.log"
+  if [ "${status:-0}" != 0 ]; then
+    echo "make $CHECK_TARGET failed (status $status), failing tests:"
+    tail -n 100 tests/*.fail 2>/dev/null || true
+  fi
   ;;
 collect)
   # Collect before any uninstrument_base_r(), which deletes the counters file
