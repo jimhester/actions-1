@@ -1,0 +1,81 @@
+on:
+  workflow_call:
+    secrets:
+      CODECOV_TOKEN:
+        required: false
+
+name: Coverage from SVN
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-26.04
+    # build 18 min, instrument 2 min, check-all 58 min on 8 cores
+    timeout-minutes: 360
+    container:
+      image: debian:stable
+    env:
+      DEBIAN_FRONTEND: noninteractive
+    steps:
+    - name: System dependencies
+      run: |
+        set -e
+        apt-get update -y
+        apt-get install -y gcc g++ make curl ca-certificates gnupg locales git rsync gfortran xvfb autoconf pkg-config texinfo texlive-latex-extra texlive-fonts-recommended tk8.6-dev dpkg-dev lcov \
+        libcurl4-openssl-dev libssl-dev libblas-dev libbz2-dev libicu-dev libjpeg-dev liblapack-dev liblzma-dev libncurses5-dev libpcre2-dev libpng-dev libtiff-dev libcairo2-dev libpango1.0-dev libreadline-dev libxt-dev
+        localedef -i en_US -f UTF-8 en_US.UTF-8
+        echo "LANG=en_US.UTF-8" >> $GITHUB_ENV
+
+    - name: Checkout
+      uses: r-devel/actions/checkout@main
+
+    - name: Build R with coverage instrumentation
+      uses: r-devel/actions/coverage@main
+      with:
+        step: build
+
+    - name: Build R for instrumenting and install covr
+      uses: r-devel/actions/coverage@main
+      with:
+        step: covr
+
+    - name: Instrument base packages
+      uses: r-devel/actions/coverage@main
+      with:
+        step: instrument
+
+    - name: Run checks
+      uses: r-devel/actions/coverage@main
+      with:
+        step: check
+
+    - name: Collect coverage
+      uses: r-devel/actions/coverage@main
+      with:
+        step: collect
+
+    # Paths in the lcov files are relative to the repository root
+    - name: Upload R coverage
+      uses: codecov/codecov-action@v5
+      with:
+        files: ../base-r-coverage/out/lcov-r.info
+        flags: r
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
+
+    - name: Upload C/C++/Fortran coverage
+      uses: codecov/codecov-action@v5
+      with:
+        files: ../base-r-coverage/out/lcov-c.info
+        flags: c
+        token: ${{ secrets.CODECOV_TOKEN }}
+        fail_ci_if_error: true
+
+    - name: Save HTML report
+      uses: actions/upload-artifact@v7
+      with:
+        name: coverage-html
+        path: ../base-r-coverage/out/html
