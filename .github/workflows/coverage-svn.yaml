@@ -30,30 +30,30 @@ jobs:
         echo "LANG=en_US.UTF-8" >> $GITHUB_ENV
 
     - name: Checkout
-      uses: jimhester/actions/checkout@coverage-svn-test
+      uses: jimhester/actions-1/checkout@coverage-svn-test
 
     - name: Build R with coverage instrumentation
-      uses: jimhester/actions/coverage@coverage-svn-test
+      uses: jimhester/actions-1/coverage@coverage-svn-test
       with:
         step: build
 
     - name: Build R for instrumenting and install covr
-      uses: jimhester/actions/coverage@coverage-svn-test
+      uses: jimhester/actions-1/coverage@coverage-svn-test
       with:
         step: covr
 
     - name: Instrument base packages
-      uses: jimhester/actions/coverage@coverage-svn-test
+      uses: jimhester/actions-1/coverage@coverage-svn-test
       with:
         step: instrument
 
     - name: Run checks
-      uses: jimhester/actions/coverage@coverage-svn-test
+      uses: jimhester/actions-1/coverage@coverage-svn-test
       with:
         step: check
 
     - name: Collect coverage
-      uses: jimhester/actions/coverage@coverage-svn-test
+      uses: jimhester/actions-1/coverage@coverage-svn-test
       with:
         step: collect
 
