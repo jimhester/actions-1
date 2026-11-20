@@ -30,30 +30,30 @@ jobs:
         echo "LANG=en_US.UTF-8" >> $GITHUB_ENV
 
     - name: Checkout
-      uses: r-devel/actions/checkout@main
+      uses: jimhester/actions/checkout@coverage-svn-test
 
     - name: Build R with coverage instrumentation
-      uses: r-devel/actions/coverage@main
+      uses: jimhester/actions/coverage@coverage-svn-test
       with:
         step: build
 
     - name: Build R for instrumenting and install covr
-      uses: r-devel/actions/coverage@main
+      uses: jimhester/actions/coverage@coverage-svn-test
       with:
         step: covr
 
     - name: Instrument base packages
-      uses: r-devel/actions/coverage@main
+      uses: jimhester/actions/coverage@coverage-svn-test
       with:
         step: instrument
 
     - name: Run checks
-      uses: r-devel/actions/coverage@main
+      uses: jimhester/actions/coverage@coverage-svn-test
       with:
         step: check
 
     - name: Collect coverage
-      uses: r-devel/actions/coverage@main
+      uses: jimhester/actions/coverage@coverage-svn-test
       with:
         step: collect
 
@@ -65,7 +65,7 @@ jobs:
         flags: r
         token: ${{ secrets.CODECOV_TOKEN }}
         disable_search: true
-        fail_ci_if_error: true
+        fail_ci_if_error: false
 
     - name: Upload C/C++/Fortran coverage
       uses: codecov/codecov-action@v5
@@ -74,7 +74,7 @@ jobs:
         flags: c
         token: ${{ secrets.CODECOV_TOKEN }}
         disable_search: true
-        fail_ci_if_error: true
+        fail_ci_if_error: false
 
     - name: Save HTML report
       uses: actions/upload-artifact@v7
