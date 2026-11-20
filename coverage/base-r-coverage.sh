@@ -74,8 +74,22 @@ collect)
     cat(sprintf("R %.1f%%, compiled %.1f%%, total %.1f%%\n",
       covr::percent_coverage(r), covr::percent_coverage(c),
       covr::percent_coverage(c(r, c))))'
+  # Some R code isn't from a file of $SRC (e.g. tcltk is loaded from its
+  # installed copy): genhtml can't show it and Codecov can't map it
+  cd "$SRC"
+  for f in "$OUT"/lcov-r.info "$OUT"/lcov-c.info; do
+    awk -v RS='end_of_record\n' -v ORS='end_of_record\n' '
+      match($0, /(^|\n)SF:[^\n]*/) {
+        sf = substr($0, RSTART, RLENGTH); sub(/^\n?SF:/, "", sf)
+        if ((getline line < sf) < 0) { dropped++; next }
+        close(sf)
+      }
+      NF { print }
+      END { if (dropped) printf "dropped %d files not in %s\n", dropped, ENVIRON["SRC"] > "/dev/stderr" }
+    ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+  done
   if command -v genhtml > /dev/null; then
-    cd "$SRC" && genhtml -q --ignore-errors source -o "$OUT/html" \
+    genhtml -q --ignore-errors source -o "$OUT/html" \
       "$OUT/lcov-r.info" "$OUT/lcov-c.info"
   fi
   ;;
