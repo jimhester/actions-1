@@ -3,21 +3,19 @@
 #
 # Usage: base-r-coverage.sh <step>, steps in order:
 #   build       configure and build R with gcov instrumentation in $BUILD
-#   covr        build an optimised R in $BUILD_FAST and install covr into
-#               $COVR_LIB
+#   covr        install covr into $COVR_LIB, using the R built in $BUILD
 #   instrument  instrument the R code of the base packages built in $BUILD
 #   check       run the checks, recording coverage
 #   collect     write lcov files (paths relative to $SRC) and, if genhtml is
 #               installed, an HTML report
 #
 # Environment: SRC (R sources, default: the current directory). BUILD,
-# BUILD_FAST, COVR_LIB and OUT default to directories next to $SRC.
+# COVR_LIB and OUT default to directories next to $SRC.
 # Also CHECK_TARGET (default check-all) and JOBS (default: all cores).
 set -euo pipefail
 SRC=$(cd "${SRC:-.}" && pwd)
 WORK=${WORK:-$(dirname "$SRC")/base-r-coverage}
 BUILD=${BUILD:-$WORK/build-gcov}
-BUILD_FAST=${BUILD_FAST:-$WORK/build-fast}
 COVR_LIB=${COVR_LIB:-$WORK/covr-lib}
 OUT=${OUT:-$WORK/out}
 CHECK_TARGET=${CHECK_TARGET:-check-all}
@@ -37,14 +35,12 @@ build)
   make -j"$JOBS"
   ;;
 covr)
-  # Instrumenting byte-compiles the code with the R running it, which is 10x
-  # slower in the -O0 build; the byte code doesn't depend on compiler flags.
-  mkdir -p "$BUILD_FAST" "$COVR_LIB" && cd "$BUILD_FAST"
-  "$SRC/configure" "${CONFIG[@]}" --without-recommended-packages
-  make -j"$JOBS"
   # covr must stay installed at this path while R is instrumented: its
-  # shared library path is baked into the base package loader.
-  R_LIBS="$COVR_LIB" bin/Rscript -e '
+  # shared library path is baked into the base package loader. Its compiled
+  # dependencies are built with --coverage too, but they are outside $SRC so
+  # they are not reported.
+  mkdir -p "$COVR_LIB"
+  R_LIBS="$COVR_LIB" "$BUILD/bin/Rscript" -e '
     install.packages("pak", lib = Sys.getenv("R_LIBS"), repos = sprintf(
       "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
       .Platform$pkgType, R.Version()$os, R.Version()$arch))
@@ -52,11 +48,12 @@ covr)
     pak::pkg_install("r-lib/covr@covr-base-packages", lib = Sys.getenv("R_LIBS"))'
   ;;
 instrument)
-  R_LIBS="$COVR_LIB" "$BUILD_FAST/bin/Rscript" -e '
+  R_LIBS="$COVR_LIB" "$BUILD/bin/Rscript" -e '
     covr::instrument_base_r(Sys.getenv("SRC"),
       lib = file.path(Sys.getenv("BUILD"), "library"),
-      trace_dir = Sys.getenv("TRACES"))'
-  # Instrumenting ran no code of $BUILD, but start from zero anyway
+      trace_dir = Sys.getenv("TRACES"),
+      cores = parallel::detectCores())'
+  # Instrumenting ran the coverage build, start from zero
   find "$BUILD" -name '*.gcda' -delete
   ;;
 check)
@@ -68,7 +65,7 @@ check)
 collect)
   # Collect before any uninstrument_base_r(), which deletes the counters file
   mkdir -p "$OUT"
-  R_LIBS="$COVR_LIB" "$BUILD_FAST/bin/Rscript" -e '
+  R_LIBS="$COVR_LIB" "$BUILD/bin/Rscript" -e '
     src <- Sys.getenv("SRC"); out <- Sys.getenv("OUT")
     r <- covr::base_r_code_coverage(Sys.getenv("TRACES"), src)
     c <- covr::base_r_compiled_coverage(Sys.getenv("BUILD"), src)

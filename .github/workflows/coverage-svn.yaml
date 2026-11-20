@@ -13,7 +13,7 @@ jobs:
   coverage:
     name: Coverage
     runs-on: ubuntu-26.04
-    # build 18 min, instrument 2 min, check-all 58 min on 8 cores
+    # build 18 min, instrument 7 min, check-all 58 min on 8 cores
     timeout-minutes: 360
     container:
       image: debian:stable
@@ -37,7 +37,7 @@ jobs:
       with:
         step: build
 
-    - name: Build R for instrumenting and install covr
+    - name: Install covr
       uses: r-devel/actions/coverage@main
       with:
         step: covr
