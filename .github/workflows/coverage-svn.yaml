@@ -61,21 +61,23 @@ jobs:
     - name: Upload R coverage
       uses: codecov/codecov-action@v5
       with:
-        files: ../base-r-coverage/out/lcov-r.info
+        files: coverage-out/lcov-r.info
         flags: r
         token: ${{ secrets.CODECOV_TOKEN }}
+        disable_search: true
         fail_ci_if_error: true
 
     - name: Upload C/C++/Fortran coverage
       uses: codecov/codecov-action@v5
       with:
-        files: ../base-r-coverage/out/lcov-c.info
+        files: coverage-out/lcov-c.info
         flags: c
         token: ${{ secrets.CODECOV_TOKEN }}
+        disable_search: true
         fail_ci_if_error: true
 
     - name: Save HTML report
       uses: actions/upload-artifact@v7
       with:
         name: coverage-html
-        path: ../base-r-coverage/out/html
+        path: coverage-out/html

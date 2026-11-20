@@ -13,3 +13,4 @@ runs:
       shell: bash
       env:
         SRC: ${{github.workspace}}
+        OUT: ${{github.workspace}}/coverage-out
