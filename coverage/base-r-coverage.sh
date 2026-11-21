@@ -98,9 +98,15 @@ collect)
       END { if (dropped) printf "dropped %d files not in the source tree\n", dropped > "/dev/stderr" }
     ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
   done
+  # The HTML report is a convenience: it shouldn't stop the uploads. lcov 2
+  # rejects some of covr's records ("unexpected category UNK"), which
+  # `category` ignores; lcov 1 doesn't know that category.
   if command -v genhtml > /dev/null; then
-    genhtml -q --ignore-errors source -o "$OUT/html" \
-      "$OUT/lcov-r.info" "$OUT/lcov-c.info"
+    genhtml -q --ignore-errors source,category -o "$OUT/html" \
+      "$OUT/lcov-r.info" "$OUT/lcov-c.info" ||
+      genhtml -q --ignore-errors source -o "$OUT/html" \
+        "$OUT/lcov-r.info" "$OUT/lcov-c.info" ||
+      echo "genhtml failed, no HTML report" >&2
   fi
   ;;
 *)
