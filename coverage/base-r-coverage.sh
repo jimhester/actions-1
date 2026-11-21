@@ -67,7 +67,9 @@ check)
   tail -n 30 "$OUT/check.log"
   if [ "${status:-0}" != 0 ]; then
     echo "make $CHECK_TARGET failed (status $status), failing tests:"
-    tail -n 100 tests/*.fail 2>/dev/null || true
+    for f in tests/*.fail; do
+      [ -e "$f" ] && { echo "==> $f <=="; tail -n 30 "$f"; }
+    done
   fi
   ;;
 collect)
@@ -83,17 +85,14 @@ collect)
       covr::percent_coverage(r), covr::percent_coverage(c),
       covr::percent_coverage(c(r, c))))'
   # Some R code isn't from a file of $SRC (e.g. tcltk is loaded from its
-  # installed copy): genhtml can't show it and Codecov can't map it
+  # installed copy in $BUILD): genhtml can't show it and Codecov can't map it.
+  # Paths of files in $SRC are relative, drop the absolute ones.
   cd "$SRC"
   for f in "$OUT"/lcov-r.info "$OUT"/lcov-c.info; do
     awk -v RS='end_of_record\n' -v ORS='end_of_record\n' '
-      match($0, /(^|\n)SF:[^\n]*/) {
-        sf = substr($0, RSTART, RLENGTH); sub(/^\n?SF:/, "", sf)
-        if ((getline line < sf) < 0) { dropped++; next }
-        close(sf)
-      }
+      /(^|\n)SF:\// { dropped++; next }
       NF { print }
-      END { if (dropped) printf "dropped %d files not in %s\n", dropped, ENVIRON["SRC"] > "/dev/stderr" }
+      END { if (dropped) printf "dropped %d files not in the source tree\n", dropped > "/dev/stderr" }
     ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
   done
   if command -v genhtml > /dev/null; then
