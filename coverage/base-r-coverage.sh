@@ -68,7 +68,10 @@ check)
   if [ "${status:-0}" != 0 ]; then
     echo "make $CHECK_TARGET failed (status $status), failing tests:"
     for f in tests/*.fail; do
-      [ -e "$f" ] && { echo "==> $f <=="; tail -n 30 "$f"; }
+      if [ -e "$f" ]; then
+        echo "==> $f <=="
+        tail -n 30 "$f"
+      fi
     done
   fi
   ;;

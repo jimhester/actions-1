@@ -57,8 +57,10 @@ jobs:
       with:
         step: collect
 
-    # Paths in the lcov files are relative to the repository root
+    # Paths in the lcov files are relative to the repository root. Each upload
+    # runs if its report exists, also if an earlier upload failed.
     - name: Upload R coverage
+      if: ${{ !cancelled() && hashFiles('coverage-out/lcov-r.info') != '' }}
       uses: codecov/codecov-action@v5
       with:
         files: coverage-out/lcov-r.info
@@ -68,6 +70,7 @@ jobs:
         fail_ci_if_error: false
 
     - name: Upload C/C++/Fortran coverage
+      if: ${{ !cancelled() && hashFiles('coverage-out/lcov-c.info') != '' }}
       uses: codecov/codecov-action@v5
       with:
         files: coverage-out/lcov-c.info
@@ -77,9 +80,11 @@ jobs:
         fail_ci_if_error: false
 
     - name: Save HTML report and check log
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v7
       with:
         name: coverage
+        if-no-files-found: warn
         path: |
           coverage-out/html
           coverage-out/check.log
