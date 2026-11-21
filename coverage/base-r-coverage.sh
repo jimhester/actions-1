@@ -14,10 +14,12 @@
 # Also CHECK_TARGET (default check-all) and JOBS (default: all cores).
 set -euo pipefail
 SRC=$(cd "${SRC:-.}" && pwd)
-WORK=${WORK:-$(dirname "$SRC")/base-r-coverage}
-BUILD=${BUILD:-$WORK/build-gcov}
-COVR_LIB=${COVR_LIB:-$WORK/covr-lib}
-OUT=${OUT:-$WORK/out}
+# The steps change directory, so the paths are made absolute first; they don't
+# need to exist yet.
+WORK=$(realpath -m "${WORK:-$(dirname "$SRC")/base-r-coverage}")
+BUILD=$(realpath -m "${BUILD:-$WORK/build-gcov}")
+COVR_LIB=$(realpath -m "${COVR_LIB:-$WORK/covr-lib}")
+OUT=$(realpath -m "${OUT:-$WORK/out}")
 CHECK_TARGET=${CHECK_TARGET:-check-all}
 JOBS=${JOBS:-$(nproc)}
 # The R code below reads these from the environment
