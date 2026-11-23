@@ -47,7 +47,7 @@ covr)
       "https://r-lib.github.io/p/pak/stable/%s/%s/%s",
       .Platform$pkgType, R.Version()$os, R.Version()$arch))
     # TODO: switch to the CRAN release of covr once it has these functions
-    pak::pkg_install("r-lib/covr@covr-base-packages", lib = Sys.getenv("R_LIBS"))'
+    pak::pkg_install("r-lib/covr", lib = Sys.getenv("R_LIBS"))'
   ;;
 instrument)
   R_LIBS="$COVR_LIB" "$BUILD/bin/Rscript" -e '
